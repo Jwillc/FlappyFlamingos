@@ -3,6 +3,7 @@ package com.example.flappybirdgpt
 import android.content.Context
 import android.graphics.Paint
 import android.graphics.*
+import android.util.Log
 import android.view.View
 
 class GameView(context: Context, private var birdVelocity: Float) : View(context) {
@@ -18,19 +19,6 @@ class GameView(context: Context, private var birdVelocity: Float) : View(context
     // Constants
     private val birdRadius = 30f
 
-    init {
-        birdBitmap1 = BitmapFactory.decodeResource(resources, R.drawable.bird_1)
-        birdBitmap2 = BitmapFactory.decodeResource(resources, R.drawable.bird_2)
-
-        // Scale the bitmaps once
-        birdBitmap1 = Bitmap.createScaledBitmap(birdBitmap1!!, 150, 150, false)
-        birdBitmap2 = Bitmap.createScaledBitmap(birdBitmap2!!, 150, 150, false)
-
-        // Load the palm and palm_repeatable bitmaps
-        palmBitmap = BitmapFactory.decodeResource(resources, R.drawable.palm)
-        palmRepeatableBitmap = BitmapFactory.decodeResource(resources, R.drawable.palm_repeatable)
-    }
-
     var birdX: Float = 100f
     var birdY: Float = 0f
     private var pipeX: Float = 0f
@@ -42,9 +30,29 @@ class GameView(context: Context, private var birdVelocity: Float) : View(context
     private var isGameOver: Boolean = false
 
     init {
+
+        birdBitmap1 = BitmapFactory.decodeResource(resources, R.drawable.bird_1)
+        birdBitmap2 = BitmapFactory.decodeResource(resources, R.drawable.bird_2)
+
+        // Scale the bitmaps once
+        birdBitmap1 = Bitmap.createScaledBitmap(birdBitmap1!!, 150, 150, false)
+        birdBitmap2 = Bitmap.createScaledBitmap(birdBitmap2!!, 150, 150, false)
+
+        // Load the palm and palm_repeatable bitmaps
+        palmBitmap = BitmapFactory.decodeResource(resources, R.drawable.palm)
+        palmRepeatableBitmap = BitmapFactory.decodeResource(resources, R.drawable.palm_repeatable)
+
         birdPaint.color = Color.YELLOW
         pipePaint.color = Color.GREEN
         pipePaint.style = Paint.Style.FILL
+
+        birdX = 100f
+        birdY = 500f // Adjust the initial birdY position as needed
+        pipeX = width.toFloat() // Start the pipe off the screen
+        pipeY = 600f // Adjust the initial pipeY position as needed
+        pipeGap = 200f // Adjust the initial pipeGap size as needed
+        pipeWidth = 200f // Adjust the initial pipeWidth as needed
+        pipeHeight = 600f // Adjust the initial pipeHeight as needed
     }
 
     fun setBirdVelocity(velocity: Float) {
@@ -68,9 +76,19 @@ class GameView(context: Context, private var birdVelocity: Float) : View(context
     }
 
     private fun checkCollision() {
-        val lowerPipeY = pipeY + pipeGap + pipeHeight
-        if (birdY < pipeY || birdY > lowerPipeY || birdX + birdRadius > pipeX && birdX - birdRadius < pipeX + pipeWidth) {
-            setGameOver()
+        val upperPipeBottom = pipeY
+        val lowerPipeTop = pipeY + pipeGap
+
+        val birdLeft = birdX - birdRadius
+        val birdRight = birdX + birdRadius
+        val birdTop = birdY - birdRadius
+        val birdBottom = birdY + birdRadius
+
+        if (birdRight > pipeX && birdLeft < pipeX + pipeWidth) {
+            if (birdTop < upperPipeBottom || birdBottom > lowerPipeTop) {
+                setGameOver()
+                Log.d("XYZ", "Game Over")
+            }
         }
     }
 
@@ -83,10 +101,16 @@ class GameView(context: Context, private var birdVelocity: Float) : View(context
         super.onDraw(canvas)
 
         // Draw the bird
-        val birdBitmap = if (birdVelocity >= 0) birdBitmap1 else birdBitmap2
+        // Draw the bird as a rectangle
+        val birdLeft = birdX - birdRadius
+        val birdTop = birdY - birdRadius
+        val birdRight = birdX + birdRadius
+        val birdBottom = birdY + birdRadius
+        canvas.drawRect(birdLeft, birdTop, birdRight, birdBottom, birdPaint)
+        /*val birdBitmap = if (birdVelocity >= 0) birdBitmap1 else birdBitmap2
         birdBitmap?.let {
             canvas.drawBitmap(it, birdX - birdRadius, birdY - birdRadius, null)
-        }
+        }*/
 
         // Calculate the upper and lower pipe positions
         val upperPipeBottom = pipeY - pipeGap
